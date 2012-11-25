@@ -1,0 +1,506 @@
+acroread  /home/richter/SW/oracle11g2DOC/E11882_01/server.112/e10713.pdf /home/richter/SW/oracle11g2DOC/E11882_01/server.112/e10820.pdf /home/richter/SW/oracle11g2DOC/E11882_01/server.112/e10595.pdf /home/richter/SW/oracle11g2DOC/E11882_01/server.112/e10592.pdf /home/richter/SW/oracle10g2DOC/b14220.pdf   /home/richter/SW/oracle11g2DOC/E11882_01/backup.112/e10642.pdf /home/richter/SW/oracle11g2DOC/E11882_01/appdev.112/e10577.pdf /home/richter/SW/oracle11g2DOC/E11882_01/install.112/e10812.pdf
+
+asm
+acroread /home/richter/SW/oracle11g2DOC/E11882_01/server.112/e10500.pdf
+
+
+SELECT blocks, num_rows FROM user_tables WHERE table_name = 'T'
+SELECT blevel, leaf_blocks, clustering_factor FROM user_indexes WHERE index_name = 'T_PK'
+SELECT num_rows, blocks, round(num_rows/blocks) AS rows_per_block from user_tables where table_name ='T'
+SELECT status, sql_id, sql_child_number FROM v$session WHERE username = 'SCOTT';
+
+-------------- trace 
+alter session set statistics_level=all;
+alter session set timed_statistics=true;
+set linesize 200
+set pagesize 100
+
+alter session set events '10046 trace name context forever, level 12';
+alter session set events '10046 trace name context off';
+
+select * from table(dbms_xplan.display_cursor(null,null,'all allstats last memstats'));
+
+select * from table(dbms_xplan.display_cursor('',0,'all ALLSTATS LAST'));
+select * from table(dbms_xplan.display_cursor(null,null,'iostats last'));
+SELECT * FROM table(dbms_xplan.display(null,null,'all'));
+SELECT * FROM table(dbms_xplan.display(null,null,'advanced'));
+SELECT * FROM table(dbms_xplan.display(null,null,'typical'));
+select * from table(dbms_xplan.display_cursor('sql_id',null,'advanced'))
+可以获得很详细的信息，包括绑定变量和ＨＩＮＴ的情况
+
+select pool,name,bytes from v$sgastat order by pool,name; 
+select  distinct(sql_id) from v$sql_plan where object_owner=upper('ks1005')
+select segment_name, segment_type,bytes,blocks,EXTENTS  from user_segments ;
+
+SELECT blocks, num_rows FROM user_tables WHERE table_name = 'T'
+SELECT blevel, leaf_blocks, clustering_factor FROM user_indexes WHERE index_name = 'T_PK'
+SELECT num_rows, blocks, round(num_rows/blocks) AS rows_per_block from user_tables where table_name ='T'
+topn
+SQL> select ename,sal,
+  2   row_number()
+  3     over (order by sal desc)rn,
+  4   rank()
+  5     over (order by sal desc)rnk,
+  6   dense_rank()
+  7     over (order by sal desc)drnk
+  8   from emp
+  9  order by sal desc
+ 10  /
+
+ENAME    SAL   RN   RNK   DRNK
+-----   ----   --   ---   ----
+ KING   5000    1     1      1
+ FORD   3000    2     2      2
+SCOTT   3000    3     2      2
+JONES   2975    4     4      3
+BLAKE   2850    5     5      4
+CLARK   2450    6     6      5
+
+select dbms_metadata.get_ddl('TABLE','T1') FROM DUAL;
+
+ops$tkyte@ORA10G> select temporary, cnt, round( (ratio_to_report(cnt) over ()) * 100, 2 ) rtr from ( select temporary, count(*) cnt from big_table group by temporary) /
+T CNT RTR
+- ---------- ----------
+N 1779 .18
+Y 998221 99.82
+
+select to_char(sysdate,'yyyy-mm-dd hh24:mi:ss')time, to_char(dbms_flashback.get_system_change_number) scn from dual;
+
+select to_char(begin_time, 'DD-MON-RR HH24:MI') begin_time, to_char(end_time, 'DD-MON-RR HH24:MI') end_time, tuned_undoretention from v$undostat order by end_time;
+
+select extent_id,file_id,block_id from dba_extents where segment_name='DUAL' and owner='SYS';
+
+select OWNER,OBJECT_NAME,OBJECT_ID,OBJECT_TYPE,TIMESTAMP from dba_objects where object_name = 'DUAL' and data_object_id is not null;
+
+select obj, tch, file#, dbablk, DUMMY from x$bh, (select dummy from dual) where obj = (select data_object_id from dba_objects where object_name = 'DUAL' and data_object_id is not null);
+
+----session 
+select * from v$mystat where rownum <2;
+
+col program format a20
+col module format a30
+col username format a20
+col machine format a20
+select sid, serial#,username,machine,program,module from v$session where type !='BACKGRROUND' order by username,machine;
+
+---------------------------------------
+exec dbms_system.set_ev(si=>156,se=>442,ev=>10046,le=>12,nm=>null); --刚才没成功？？
+exec dbms_monitor.session_trace_enable(session_id=>156,serial_num=>442,waitS=>TRUE,binds=>true); --这个等级是多少??
+exec dbms_monitor.session_trace_disable(session_id=>140,serial_num=>431);
+SELECT status, sql_id, sql_child_number FROM v$session WHERE username =upper('ks1005')
+
+----------------explain
+SELECT sql_id, child_number, sql_text FROM v$sql WHERE  sql_text NOT LIKE '%v$sql%' and sql_text LIKE '%   %' 
+select  distinct(v$sql_plan.sql_id) ,sql_text from v$sql_plan ,v$sql where object_owner=upper('ks1005') and v$sql_plan.sql_id = v$sql.SQL_ID;
+select  distinct(v$sql_plan.sql_id) ,substrc(sql_text,0,100) from v$sql_plan ,v$sql where object_owner=upper('ks1005') and v$sql_plan.sql_id = v$sql.SQL_ID;
+select * from table(dbms_xplan.display_cursor('',0,'all ALLSTATS LAST'));
+----- 表的统计采样
+SELECT num_rows, blocks, empty_blocks, avg_space, chain_cnt, avg_row_len FROM user_tab_statistics WHERE table_name = 'T';
+col PARTITION_NAME format a15
+SELECT  PARTITION_NAME,PARTITION_POSITION,num_rows, blocks, empty_blocks, avg_space, chain_cnt, avg_row_len FROM user_tab_statistics WHERE table_name = '';
+
+col name format a30
+col #dst format 9999999
+col low_value format a10
+col high_value format a10
+SELECT column_name AS "NAME", num_distinct AS "#DST", low_value, high_value, density AS "DENS", num_nulls AS "#NULL", avg_col_len AS "AVGLEN", histogram, num_buckets AS "#BKT" FROM user_tab_col_statistics WHERE table_name = upper('T') order by num_distinct ;
+
+ SELECT table_name, sample_size, num_rows, round(sample_size/num_rows*100,1) AS "%" FROM user_tables WHERE num_rows > 0 ORDER BY table_name
+
+exec dbms_stats.gather_table_stats(user,upper('makecardrecords'),estimate_percent=>1);
+--------- index的statistics
+select INDEX_NAME,INDEX_TYPE, BLEVEL, LEAF_BLOCKS,AVG_LEAF_BLOCKS_PER_KEY,AVG_DATA_BLOCKS_PER_KEY, CLUSTERING_FACTOR,COMPRESSION, TABLE_NAME from user_indexes where TABLE_NAME like upper('MAKECARDRECORDS')
+
+ALTER SYSTEM KILL SESSION '132,23582' IMMEDIATE
+
+col NAME format a60;
+select distinct(NAME), statistic# from v$statname order by 1;
+select dbms_metadata.get_ddl( 'TABLE', 'T' ) from dual;
+
+SELECT sql_id, child_number, sql_text, optimizer_mode, plan_hash_value FROM v$sql
+WHERE sql_id = (SELECT prev_sql_id FROM v$session WHERE sid = sys_context('userenv','sid'));
+
+col INDEX_NAME format a40;
+col INDEX_TYPE format a20;
+select INDEX_NAME,INDEX_TYPE ,STATUS ,NUM_ROWS from user_indexes where table_name =upper('');
+
+tkprof oracledb_ora_9767.trc mkcard_daily.trace sys=no explain=ks1005/ks1005
+
+sys=no sort=prsela,exeela,fchela
+
+tvdxtat -i -o -s no -w yes
+
+select paddr,name ,description from v$bgprocess order by 1
+
+ps -aef |grep 'ora_.*oracledb'
+
+SQL> ALTER SYSTEM FLUSH SHARED_POOL;
+
+set line 132 
+col statistic_name format a30 trunc 
+SELECT t.OWNER, t.OBJECT_NAME, t.OBJECT_TYPE, STATISTIC_NAME, t.VALUE value 
+     FROM v$segment_statistics t 
+     WHERE t.STATISTIC_NAME = 'ITL waits' 
+     AND t.VALUE > 10 order by value;
+
+tkprof DBM11106_ora_9813.trc DBM11106_ora_9813.txt sort=prsela,exeela,fchela print=3 explain=sh/sh aggregate=no
+
+col SEGMENT_NAME format a20;
+col PARTITION_NAME format a20;
+select SEGMENT_NAME,PARTITION_NAME,EXTENT_ID,FILE_ID,BLOCK_ID,BYTES,BLOCKS from dba_extents where SEGMENT_NAME=;
+
+col name format a25
+SELECT index_name AS name, blevel, leaf_blocks AS leaf_blks, distinct_keys AS dst_keys, num_rows, clustering_factor AS clust_fact, avg_leaf_blocks_per_key AS leaf_per_key, avg_data_blocks_per_key AS data_per_key FROM user_ind_statistics WHERE table_name = 'T';
+
+set line 132;
+col statistic_name format a30 trunc;
+SELECT t.OWNER, t.OBJECT_NAME, t.OBJECT_TYPE, STATISTIC_NAME, t.VALUE value FROM v$segment_statistics t WHERE t.STATISTIC_NAME = 'ITL waits' AND t.VALUE > 10 order by value;
+
+ col OBJECT_NAME format a20;
+select OWNER,OBJECT_NAME,OBJECT_ID,OBJECT_TYPE from dba_objects where OBJECT_TYPE like '%DIRECTORY%';
+
+select dbms_metadata.get_ddl('TABLE',t.tname) FROM (SELECT tname  FROM TAB WHERE TABTYPE='TABLE') t;
+
+col owner format a30;
+col segment_name format a30;
+select * from (select SEGMENT_NAME,segment_type,TABLESPACE_NAME,blocks,BYTES from dba_segments  where owner='SYS' order by 4 desc) where rownum <100;
+select * from (select SEGMENT_NAME,segment_type,TABLESPACE_NAME,blocks,BYTES from dba_segments  where owner='SYS' order by 4 desc ) where rownum <100 order by 2, 4 desc;
+
+select dbms_metadata.get_ddl('TABLE',t.segment_name) FROM (select segment_name from (select SEGMENT_NAME,segment_type,TABLESPACE_NAME,blocks,BYTES from dba_segments  where owner='SYS'and segment_type='TABLE' order by 4 desc ) where rownum <50 )t;
+
+select SEGMENT_NAME,HEADER_FILE,HEADER_BLOCK,BLOCKS from dba_segments where SEGMENT_NAME='TEST1';
+alter system dump datafile 5 block min 2435 block max 2443;
+
+select segment_name ,extent_id,file_id,block_id from dba_extents where segment_name='TEST2';
+select file_name from dba_data_files where file_id=10;
+dd if=/opt/oracle/oradata/orcl/users02.dbf  of=a.dmp bs=8192 skip=501 count=1
+
+1)文档自动扩展
+select file_name,tablespace_name,status,autoextensible from dba_data_files  where autoextensible<>'NO';
+2)默认表空间
+Select username,account_status,default_tablespace,temporary_tablespace from dba_Users;
+alter user ctais2bb default tablespace ctais2_dat;
+3)剩余表空间        
+Select a.Tablespace_Name, a.Total || 'M' Total_Space, (a.Total - b.Free) || 'M' Used_Space, To_Char((a.Total - b.Free) / a.Total * 100, '99.99') || '%' Pct_Free
+From
+(Select Tablespace_Name, Sum(Bytes) / 1024 / 1024 Total From Dba_data_Files Group By tablespace_Name) a,
+(Select Tablespace_Name, Sum(Bytes) / 1024 / 1024 Free From Dba_Free_Space Group By Tablespace_Name) b where a.Tablespace_Name = b.Tablespace_Name;
+//
+Select a.Tablespace_Name, a.Total Total_Space, (a.Total - b.Free) Used_Space, To_Char((a.Total - b.Free) / a.Total * 100, '99.99') || '%' Pct_Free
+From
+(Select Tablespace_Name, Sum(Bytes) / 1024 / 1024 Total From Dba_data_Files Group By tablespace_Name) a,
+(Select Tablespace_Name, Sum(Bytes) / 1024 / 1024 Free From Dba_Free_Space Group By Tablespace_Name) b where a.Tablespace_Name = b.Tablespace_Name;
+5)检查check archive
+archive log list;
+7)失效object 并修复 
+Select owner,object_name,object_type,status From Dba_Objects Where status<>'VALID';
+SQL> @$ORACLE_HOME/rdbms/admin/utlrp.sql
+8)检查row chain
+select owner,table_name,num_rows,chain_cnt From dba_tables Where  chain_cnt!=0;
+../rdbms/admin/utlchain.sql
+Sql>analyze table tablename list chained rows;
+可经过表chained_rows中table_name,head_rowid看出哪些行是迁移行
+Sql>create table aa as select a.* from sb_zsxx a,chained_rows b where a.rowid=b.head_rowid and b.table_name ='SB_ZSXX';
+sql>delete from sb_zsxx where rowid in (select head_rowid from chained_rows where table_name = 'SB_ZSXX');
+sql>insert into sb_zsxx select * from chained_row where table_name = 'SB_ZSXX';
+
+9)job
+select log_user,job,what,last_date,next_date,failures,broken from dba_jobs ;
+10)收集信息，查找差异比较大的表/index
+Select table_name,num_rows,last_analyzed From user_tables order by 2 desc ;
+11) 死锁
+Sql>select object_name,s.sid,s.serial# From v$locked_object o,v$session s ,dba_objects c Where o.session_id=s.sid And o.object_id=c.object_id;
+oracle级kill掉该session:
+sql>alter system kill session 'sid,serial#';
+操作系统级kill掉session:
+#>kill -9 pid
+12) 失效的索引
+select owner,index_name,table_name,tablespace_name,PARTITIONED,status From dba_indexes Where  status<>'VALID';
+Sql>alter index INDEX_NAME rebuild tablespace TABLESPACE_NAME;
+13)失效的约束
+Select owner,constraint_type,constraint_name,table_name,r_owner,r_constraint_name, status From dba_constraints Where  status<>'ENABLED';
+Sql>alter Table TABLE_NAME Enable Constraints CTRAINT_NAME;
+14)失效的trigger
+select owner,trigger_name,table_name,status From dba_triggers Where status<>'ENABLED';
+Sql>alter Trigger TRIGGER_NAME Enable;
+15)索引空间浪费
+Sql>analyze index indexname validate structure;
+然后查询index_stats视图：
+Sql>select name,lf_rows,lf_rows_len,del_lf_rows,del_lf_rows_len From index_stats;
+lf_rows --当前索引值的数量
+lf_rows_len --当前索引值的大小(byte)
+del_lf_rows --从索引中删除的值的数量
+del_lf_rows_len --从索引中删除的值的大小(byte)
+假如del_lf_rows_len达到lf_rows_len的20%则需求rebuild索引了
+17)缓冲区命中率 
+select name, 1-(physical_reads/(db_block_gets+consistent_gets)) "hit_ratio" from v$buffer_pool_statistics where db_block_gets+consistent_gets>0;
+18)共享池命中率
+select sum(pinhits)/sum(pins)*100 from v$librarycache;
+19)排序区
+Sql>select name,value  from v$sysstat where name like '%sort%';
+假如disk/(memoty+row)的比例过高，则需求调整sort_area_size(workarea_size_policy=false)或pga_aggregate_target(workarea_size_policy=true)
+20)日志缓冲区
+Sql>select name,value  from v$sysstat where name in ('redo entries','redo buffer allocation retries');
+假如redo buffer allocation retries/redo entries 超过1% ，则需求增大log_buffer
+
+begin DBMS_WORKLOAD_REPOSITORY.MODIFY_SNAPSHOT_SETTINGS(20160,30);
+ALTER SYSTEM SET statistics_level = "ALL" SCOPE=MEMORY;
+显示各种工作区使用情况
+select low_optimal_size/1024 low_kb,(high_optimal_size+1)/1024 high_kb, optimal_executions,onepass_executions,multipasses_executions from  v$sql_workarea_histogram where total_executions !=0;
+
+
+alter system flush shared_pool;
+alter system flush buffer_cache;
+
+alter session set statistics_level=all;
+alter session set timed_statistics=true;
+select  distinct(v$sql_plan.sql_id) ,sql_text from v$sql_plan ,v$sql where object_owner=upper('110') and v$sql_plan.sql_id = v$sql.SQL_ID;
+select * from table(dbms_xplan.display_cursor('',0,'all ALLSTATS LAST'));
+
+表空间状态
+SELECT TABLESPACE_NAME "TABLESPACE", FILE_ID, COUNT(*) "PIECES", MAX(blocks) "MAXIMUM", MIN(blocks) "MINIMUM", AVG(blocks) "AVERAGE", SUM(blocks) "TOTAL" FROM DBA_FREE_SPACE GROUP BY TABLESPACE_NAME, FILE_ID;
+
+统计数据收集
+
+SELECT program_name, schedule_name, schedule_type, enabled, state FROM dba_scheduler_jobs WHERE owner = 'SYS' AND job_name = 'GATHER_STATS_JOB';
+
+SELECT program_action, number_of_arguments, enabled FROM dba_scheduler_programs WHERE owner = 'SYS' AND program_name = 'GATHER_STATS_PROG';
+
+SELECT w.window_name, w.repeat_interval, w.duration, w.enabled FROM dba_scheduler_wingroup_members m, dba_scheduler_windows w WHERE m.window_name = w.window_name AND m.window_group_name = 'MAINTENANCE_WINDOW_GROUP'; 
+
+redo/undo信息
+SELECT a.name,b.value FROM v$statname a JOIN v$mystat b ON a.statistic# = b.statistic# WHERE a.name = 'redo size';
+SELECT a.name,b.value FROM v$statname a JOIN v$mystat b ON a.statistic# = b.statistic# WHERE a.name like '%undo%';
+scott@CBZ> ALTER SYSTEM DUMP DATAFILE 2 BLOCK MIN 121 BLOCK MAX 129;
+
+获取scn
+sys@CBZ> variable scn number;
+sys@CBZ> exec :scn:=dbms_flashback.get_system_change_number; 
+PL/SQL 过程已成功完成。 
+sys@CBZ>  print scn;
+
+       SCN
+----------
+  34958988
+
+sys@CBZ> select max(ktuxescnw * power(2, 32) + ktuxescnb) from x$ktuxe; 
+MAX(KTUXESCNW*POWER(2,32)+KTUXESCNB)
+------------------------------------
+                            34958997
+第二种需要sysdba
+
+alter session set events '10046 trace name context forever, level 12';
+alter session set events '10053 trace name context forever, level 1';
+
+察看segment adv的结论
+col task_name format a15 ;
+col segname format a25 ;
+col partition  format a15 ;
+col type  format a8 ;
+col message format a100;
+
+select af.task_name, ao.attr2 segname, ao.attr3 partition, ao.type, af.message from dba_advisor_findings af, dba_advisor_objects ao where ao.task_id = af.task_id and ao.object_id = af.object_id ;
+-------------------
+分析碎片的脚本,老白根据1019716.6 修改的
+drop table tmp_frag;
+create table tmp_frag( owner char(30),name char(30),hwm number,blks_w_rows number,avg_row_size number,possible_bytes_per_block number,no_frag_rows number,no_extents number);
+create unique index tfrag_ul on tmp_frag(owner,name);
+
+CREATE OR REPLACE PROCEDURE CZLW.test_frag (ownname VARCHAR2)
+IS
+   vblocks         INTEGER;
+   vempty_blocks   INTEGER;
+   valloc_blocks   INTEGER;
+   vhwm            INTEGER;
+   vcr             INTEGER;
+   vsf             INTEGER;
+BEGIN
+   FOR c IN (SELECT table_name
+               FROM dba_tables
+              WHERE owner = UPPER (ownname))
+   LOOP
+      BEGIN
+         SELECT blocks val1, empty_blocks val2, chain_cnt /*Number of used data blocks in the table；
+                                     Number of empty (never used) data blocks in the table; 
+                                     Number of rows in the table that are chained from one data block to another, or which have migrated to a new block, requiring a link to preserve the old ROWID */
+           INTO vblocks, vempty_blocks, vcr
+           FROM dba_tables
+          WHERE owner = UPPER (ownname) AND table_name = c.table_name;
+         SELECT blocks
+           INTO valloc_blocks
+           FROM dba_segments
+          WHERE owner = UPPER (ownname)
+                AND segment_name = UPPER (c.table_name);
+         vhwm := valloc_blocks - vempty_blocks;
+         SELECT COUNT (*)
+           INTO vsf
+           FROM dba_extents
+          WHERE owner = UPPER (ownname)
+                AND segment_name = UPPER (c.table_name);
+         INSERT INTO tmp_frag
+              VALUES (ownname, c.table_name, vhwm, vblocks, 0, 0, vcr, vsf);
+      EXCEPTION
+         WHEN NO_DATA_FOUND
+         THEN
+            DBMS_OUTPUT.put_line ('error in:' || c.table_name);
+      --exception when no_data_found then dbms_output.put_line(error in:||c.table_name||,code=);
+      END;
+      COMMIT;
+   END LOOP;
+END;
+/
+Truncate table tmp_frag;
+
+Exec test_frag(ownname=>'scott');
+col towner heading 'Owner'                 format a8       trunc;
+col tname  heading 'Table Name'            format a40      trunc;
+col exts   heading 'Exts'                  format 99999      trunc;
+col omega1 heading 'Omega1'                format 0.999    trunc;
+col chains heading 'Chains'                format 99,990   trunc;
+ttitle -    center  'Table Fragmentation Characteristics'   skip 2
+select owner towner, name tname, no_extents exts, (hwm - blks_w_rows)/(hwm + 0.0001) omega1, no_frag_rows chains from   tmp_frag order by 3 desc, 4 desc;
+---------------------------
+另外一个简易方法
+估算数据占用的块数=平均行长度*行数/(100-pct_free)*100/块大小
+通过这个值去和DBA_EXTENTS中的块数进行比较，就可以判断出表是否存在碎片了
+--------------------------------------------------------------------------
+exec dbms_stats.gather_table_stats(user,'H_ENTRY_LIST',estimate_percent=>100,cascade=>TRUE);
+SELECT blocks FROM dba_segments WHERE  segment_name = ''; 
+SELECT blocks val1, empty_blocks val2, chain_cnt  FROM dba_tables WHERE  table_name = '';
+
+察看后台进程
+select paddr, name, description from v$bgprocess order by paddr desc
+
+
+WITH db_time AS
+     (SELECT SID, VALUE
+        FROM v$sess_time_model
+       WHERE SID = 144 AND stat_name = 'DB time')
+SELECT   stm.stat_name AS statistic, TRUNC (stm.VALUE / 1000000,
+                                            3) AS seconds,
+         TRUNC (stm.VALUE / tot.VALUE * 100, 1) AS "%"
+    FROM v$sess_time_model stm, db_time tot
+   WHERE stm.SID = tot.SID AND stm.stat_name <> 'DB time' AND stm.VALUE > 0
+ORDER BY stm.VALUE DESC;
+
+看recyclebin的内容
+SELECT owner, original_name, object_name, TYPE, ts_name, droptime, related,
+       SPACE
+  FROM dba_recyclebin
+ WHERE can_undrop = 'YES';
+
+SELECT original_name, object_name, TYPE, ts_name, droptime, related, SPACE
+  FROM user_recyclebin
+ WHERE can_undrop = 'YES';
+
+flashback信息
+SELECT estimated_flashback_size, flashback_size
+  FROM V$FLASHBACK_DATABASE_LOG;
+SELECT oldest_flashback_scn, oldest_flashback_time
+  FROM V$FLASHBACK_DATABASE_LOG;
+SELECT * FROM V$FLASHBACK_DATABASE_STAT;
+SELECT issys_modifiable FROM v$parameter WHERE NAME='undo_retention'  
+
+--当前session 统计
+select *  from v$sess_time_model where sid = (select max(sid) from v$mystat);
+--latch 统计
+select name, gets, misses, immediate_gets, immediate_misses, sleeps from   v$latch      order by sleeps desc;
+--hard parse 排序
+select a.sid, c.username, b.name, a.value, round((sysdate - c.logon_time)*24) hours_connected from   v$sesstat a, v$statname b, v$session c where  c.sid   = a.sid and  a.statistic# = b.statistic# and    a.value   > 0 and  b.name  = 'parse count (hard)' order by a.value desc ;
+--产生hard parse的语句
+select hash_value, sql_id, substr(sql_text, 1, 80)
+  from v$sqlarea
+ where substr(sql_text, 1, 40) in
+       (select substr(sql_text, 1, 40)
+          from v$sqlarea
+        having count(*) > 4
+         group by substr(sql_text, 1, 40))
+ order by sql_text;
+
+revoke unlimited tablespace from xxxx
+alter user xxx quota 0 on xxxxTS
+alter user xxx quota unlimited on xxxts
+
+--找到阻塞人的session
+select sid, serial#, username
+  from v$session
+ where sid in (select blocking_session from v$session)
+
+--历史sql记录
+select * from dba_hist_sqltext
+--绑定变量
+SELECT * FROM v$sql_bind_capture
+
+--看隐含参数
+SELECT i.ksppinm name,
+       i.ksppdesc description,
+       CV.ksppstvl VALUE,
+       CV.ksppstdf isdefault,
+       DECODE(BITAND(CV.ksppstvf, 7),
+              1,
+              'MODIFIED',
+              4,
+              'SYSTEM_MOD',
+              'FALSE') ismodified,
+       DECODE(BITAND(CV.ksppstvf, 2), 2, 'TRUE', 'FALSE') isadjusted
+  FROM sys.x$ksppi i, sys.x$ksppcv CV
+ WHERE i.inst_id = USERENV('Instance')
+   AND CV.inst_id = USERENV('Instance')
+   AND i.indx = CV.indx
+   AND i.ksppinm LIKE '/_%' ESCAPE '/'
+ ORDER BY REPLACE(i.ksppinm, '_', '');  
+
+空间管理 您的位置: ITPUB个人空间 » kasaur的个人空间 » 日志
+打酱油的小生~
+oracle隐藏参数的查看和使用
+
+上一篇 / 下一篇  2012-03-05 10:16:51 / 个人分类：oracle日常
+查看( 330 ) / 评论( 1 ) / 评分( 0 / 0 )
+
+今天在论坛里，有个朋友问了个问题，非归档模式下，将其中一个数据文件offline，之后数据库又切换了很多的日志，又重启过，还没备份，现在想将之前的数据文件online，结果可想而知，具体如何分析处理？
+
+像这种情况，一般生产环境几乎不会发生，但是遇到了，就必须去面对分析并解决，第一直觉告诉我，需要使用到oracle的隐藏参数进行强制恢复，当然也有其他的手段，这里，就将oracle隐藏参数如何查看，简单介绍如下：
+
+隐藏参数 (hidden parameters) ，由oracle内部使用，以 '_' 开头。
+
+可以通过以下两种方式查看所有隐藏参数：
+
+1.
+
+SELECT i.ksppinm name,
+       i.ksppdesc description,
+       CV.ksppstvl VALUE,
+       CV.ksppstdf isdefault,
+       DECODE(BITAND(CV.ksppstvf, 7),
+              1,
+              'MODIFIED',
+              4,
+              'SYSTEM_MOD'
+              'FALSE') ismodified,
+       DECODE(BITAND(CV.ksppstvf, 2), 2, 'TRUE', 'FALSE') isadjusted
+  FROM sys.x$ksppi i, sys.x$ksppcv CV
+ WHERE i.inst_id = USERENV('Instance')
+   AND CV.inst_id = USERENV('Instance')
+   AND i.indx = CV.indx
+   AND i.ksppinm LIKE '/_%' ESCAPE '/'
+ ORDER BY REPLACE(i.ksppinm, '_', '');  
+
+2.
+
+SELECT ksppinm, ksppstvl, ksppdesc
+  FROM x$ksppi x, x$ksppcv y
+ WHERE x.indx = y.indx
+   AND TRANSLATE(ksppinm, '_', '#') LIKE '#%';
+
+
+-- 找热快
+ SELECT OBJ, sum(tch), max(d.object_name)
+   FROM X$BH b
+   join DBA_OBJECTS d on (b.obj = d.data_object_id)
+  WHERE HLADDR in (select distinct (addr)
+                     from V$LATCH_CHILDREN l
+                    where name = 'cache buffers chains'
+                      and file# not in (1, 2, 3))
+    and tch > 100
+  group by obj
+
